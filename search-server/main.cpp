@@ -61,7 +61,7 @@ public:
         const vector<string> content = SplitIntoWordsNoStop(document);
         double term_frequency = 1. / content.size();
         for (const string& word : content) {
-            word_to_documents_freqs_[word].insert({document_id, term_frequency});
+            word_to_documents_freqs_[word][document_id] += term_frequency;
         }
         ++document_count_;
     }
@@ -107,18 +107,19 @@ private:
         return words;
     }
 
+    double CalculateIDF(const string& word) const {
+            return log(static_cast<double>(document_count_) / word_to_documents_freqs_.at(word).size());
+    }
+
     Query ParseQuery(const string& text) const {
         Query query_words;
         for (const string& word : SplitIntoWordsNoStop(text)) {
             if (word[0] == '-') {
                 query_words.minus_words.insert(word.substr(1));
             } else {
-                double inverse_document_frequency;
                 if (word_to_documents_freqs_.count(word) > 0) {
-                    inverse_document_frequency = log(static_cast<double>(document_count_) 
-                                                / word_to_documents_freqs_.at(word).size());
+                    query_words.plus_words_with_frequency.insert({word, CalculateIDF(word)});
                 }
-                query_words.plus_words_with_frequency.insert({word, inverse_document_frequency});
             }
         }
         return query_words;
