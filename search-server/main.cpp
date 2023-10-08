@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <map>
+#include <numeric>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -70,9 +71,6 @@ set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
     set<string> non_empty_strings;
     for (const string& str : strings) {
         if (!str.empty()) {
-            if (!IsValidWord(str)) {
-                throw invalid_argument("Invalid symbol in word"s);
-            }
             non_empty_strings.insert(str);
         }
     }
@@ -92,6 +90,11 @@ public:
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) 
     {
+        for (const string& str : stop_words) {
+            if (!IsValidWord(str)) {
+                throw invalid_argument("Invalid symbol in word"s);
+            }
+        }
     }
 
     explicit SearchServer(const string& stop_words_text)
@@ -132,11 +135,11 @@ public:
 
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {
-                 if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+                 const double EPSILON = 1e-6;
+                 if (abs(lhs.relevance - rhs.relevance) < EPSILON) {
                      return lhs.rating > rhs.rating;
-                 } else {
-                     return lhs.relevance > rhs.relevance;
                  }
+                 return lhs.relevance > rhs.relevance;;
              });
         if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
             matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
@@ -215,11 +218,7 @@ private:
         if (ratings.empty()) {
             return 0;
         }
-        int rating_sum = 0;
-        for (const int rating : ratings) {
-            rating_sum += rating;
-        }
-        return rating_sum / static_cast<int>(ratings.size());
+        return accumulate(begin(ratings), end(ratings), 0) / static_cast<int>(ratings.size());
     }
 
     struct QueryWord {
@@ -318,7 +317,7 @@ void PrintDocument(const Document& document) {
 }
 int main() {
     try {
-        SearchServer search_server("и в на"s);
+        SearchServer search_server("и в \x12на"s);
         search_server.AddDocument(1, "пушистый кот пушистый хвост"s, DocumentStatus::ACTUAL, {7, 2, 7});
         search_server.AddDocument(1, "пушистый пёс и модный ошейник"s, DocumentStatus::ACTUAL, {1, 2});
         search_server.AddDocument(-1, "пушистый пёс и модный ошейник"s, DocumentStatus::ACTUAL, {1, 2});
