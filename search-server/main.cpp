@@ -318,7 +318,11 @@ template <typename Iterator>
 class Paginator {
 public:
     Paginator(Iterator begin, Iterator end, size_t page_size) {
-        while (begin < end) {
+        while (begin != end) {
+            size_t container_size = distance(begin, end);
+            if (page_size > container_size) {
+                page_size = container_size;
+            }
             auto page_begin = begin;
             advance(begin, page_size);
             auto page_end = begin;
