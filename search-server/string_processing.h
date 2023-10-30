@@ -6,8 +6,6 @@
 
 std::vector<std::string> SplitIntoWords(const std::string& text);
 bool IsValidWord(const std::string& word);
-template <typename StringContainer>
-std::set<std::string> MakeUniqueNonEmptyStrings(const StringContainer& strings);
 
 template <typename StringContainer>
 std::set<std::string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
